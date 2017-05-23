@@ -1,0 +1,31 @@
+{
+  "name": "paulbunyannet/ReceiveMail",
+  "description": "Receiving mail with attachments",
+  "keywords": [
+    "toolkit"
+  ],
+  "authors": [
+    {
+      "name": "Mitul Koradia",
+      "email": "mitulkoradia@gmail.com"
+    },
+    {
+      "name": "Antti",
+      "email": "anttiantti83@gmail.com"
+    },
+    {
+      "name": "Nate Nolting",
+      "email": "naten@paulbunyan.net"
+    }
+  ],
+  "require": {},
+  "require-dev": {
+    "phpunit/phpunit": "^6.1",
+    "mockery/mockery": "^0.9.9"
+  },
+  "autoload": {
+    "psr-4": {
+      "Pbc\\ReceiveMail\\": "src/ReceiveMail/"
+    }
+  }
+}
