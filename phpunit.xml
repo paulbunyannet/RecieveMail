@@ -21,7 +21,7 @@
     </filter>
 
     <testsuites>
-        <testsuite name="Baondolier Test Suite">
+        <testsuite name="ReceiveMail Test Suite">
             <directory suffix=".php">tests</directory>
         </testsuite>
     </testsuites>
