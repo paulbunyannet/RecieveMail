@@ -3,3 +3,4 @@ vendor
 clover.xml
 tmp
 coverage-checker.php
+coverage
