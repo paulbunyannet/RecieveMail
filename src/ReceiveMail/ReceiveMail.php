@@ -18,6 +18,10 @@ namespace Pbc\ReceiveMail;
  * Class ReceiveMail
  * @package Pbc\ReceiveMail
  */
+/**
+ * Class ReceiveMail
+ * @package Pbc\ReceiveMail
+ */
 class ReceiveMail
 {
     /**
@@ -57,12 +61,12 @@ class ReceiveMail
     /**
      * @var string
      */
-    protected $port = '110';
+    protected $port = 110;
 
     /**
      * @var int
      */
-    protected $imapPort = "443";
+    protected $imapPort = 443;
 
     /**
      * @var bool
@@ -76,28 +80,46 @@ class ReceiveMail
     public function __construct(array $params)
     {
 
-            foreach ($params as $key => $value) {
-                if(property_exists($this, 'set'.ucfirst($key))) {
-                  $this->{'set' . ucfirst($key)}($value);
-                } else {
-                  throw new \Exception("Unknown field \"$key\"", 1);
-                }
+        $this->init($params);
+        $this->makeServer();
+        return $this;
+
+
+    }
+
+    /**
+     * @param array $params
+     * @return $this
+     * @throws \Exception
+     */
+    protected function init(array $params)
+    {
+        foreach ($params as $key => $value) {
+            if (method_exists($this, 'set' . ucfirst($key))) {
+                $this->{'set' . ucfirst($key)}($value);
+            } else {
+                throw new \Exception("Unknown field \"$key\"", 1);
             }
+        }
 
+        return $this;
+    }
 
-
+    /**
+     * Make server connection string and set it to
+     * @return $this
+     */
+    protected function makeServer()
+    {
         if ($this->getServertype() == 'imap') {
-            // if port is not set and serverType is set to imap then default to port 443
-            if ($this->getPort() == '') {
+            if (!$this->getPort()) {
                 $this->setPort($this->getImapPort());
             }
             $this->setServer('{' . $this->getMailserver() . ':' . $this->getPort() . '}INBOX');
         } else {
             $this->setServer('{' . $this->getMailServer() . ':' . $this->getPort() . '/pop3' . ($this->getSsl() ? "/ssl" : "") . '}INBOX');
         }
-
         return $this;
-
     }
 
     /**
@@ -125,11 +147,28 @@ class ReceiveMail
     }
 
     /**
-     * @param mixed $port
+     * @param int $port
      */
     public function setPort($port)
     {
+
         $this->port = $port;
+    }
+
+    /**
+     * @return int
+     */
+    public function getImapPort()
+    {
+        return $this->imapPort;
+    }
+
+    /**
+     * @param int $imapPort
+     */
+    public function setImapPort($imapPort)
+    {
+        $this->imapPort = $imapPort;
     }
 
     /**
@@ -165,16 +204,65 @@ class ReceiveMail
     }
 
     /**
-     *
+     * Connect To the Mail Box
      */
-    function connect() //Connect To the Mail Box
+    public function connect()
     {
-
         $this->setConnection(@imap_open($this->getServer(), $this->getUsername(), $this->getPassword()));
 
         if (!$this->getConnection()) {
             throw new \Exception("Error: Connecting to mail server");
         }
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getServer()
+    {
+        return $this->server;
+    }
+
+    /**
+     * @param string $server
+     */
+    public function setServer($server)
+    {
+        $this->server = $server;
+    }
+
+    /**
+     * @return string
+     */
+    public function getUsername()
+    {
+        return $this->username;
+    }
+
+    /**
+     * @param string $username
+     */
+    public function setUsername($username)
+    {
+        $this->username = $username;
+    }
+
+    /**
+     * @return string
+     */
+    public function getPassword()
+    {
+        return $this->password;
+    }
+
+    /**
+     * @param string $password
+     */
+    public function setPassword($password)
+    {
+        $this->password = $password;
     }
 
     /**
@@ -186,11 +274,11 @@ class ReceiveMail
     }
 
     /**
-     * @param string $marubox
+     * @param string $connection
      */
-    public function setConnection($marubox)
+    public function setConnection($connection)
     {
-        $this->connection = $marubox;
+        $this->connection = $connection;
     }
 
     /**
@@ -232,29 +320,6 @@ class ReceiveMail
 
         $headers = imap_headers($this->getConnection());
         return count($headers);
-    }
-
-    protected function decodeAttachment($message, $enc = 5)
-    {
-        if ($enc == 0) {
-            $message = imap_8bit($message);
-        }
-        if ($enc == 1) {
-            $message = imap_8bit($message);
-        }
-        if ($enc == 2) {
-            $message = imap_binary($message);
-        }
-        if ($enc == 3) {
-            $message = imap_base64($message);
-        }
-        if ($enc == 4) {
-            $message = quoted_printable_decode($message);
-        }
-        /* if ($enc == 5)
-            $message = $message;*/
-
-        return $message;
     }
 
     /**
@@ -306,6 +371,29 @@ class ReceiveMail
         }
         $attachmentRequest = substr($attachmentRequest, 0, (strlen($attachmentRequest) - 1));
         return $attachmentRequest;
+    }
+
+    protected function decodeAttachment($message, $enc = 5)
+    {
+        if ($enc == 0) {
+            $message = imap_8bit($message);
+        }
+        if ($enc == 1) {
+            $message = imap_8bit($message);
+        }
+        if ($enc == 2) {
+            $message = imap_binary($message);
+        }
+        if ($enc == 3) {
+            $message = imap_base64($message);
+        }
+        if ($enc == 4) {
+            $message = quoted_printable_decode($message);
+        }
+        /* if ($enc == 5)
+            $message = $message;*/
+
+        return $message;
     }
 
     /**
@@ -429,54 +517,6 @@ class ReceiveMail
     /**
      * @return string
      */
-    public function getServer()
-    {
-        return $this->server;
-    }
-
-    /**
-     * @param string $server
-     */
-    public function setServer($server)
-    {
-        $this->server = $server;
-    }
-
-    /**
-     * @return string
-     */
-    public function getUsername()
-    {
-        return $this->username;
-    }
-
-    /**
-     * @param string $username
-     */
-    public function setUsername($username)
-    {
-        $this->username = $username;
-    }
-
-    /**
-     * @return string
-     */
-    public function getPassword()
-    {
-        return $this->password;
-    }
-
-    /**
-     * @param string $password
-     */
-    public function setPassword($password)
-    {
-        $this->password = $password;
-    }
-
-    /**
-     * @return string
-     */
     public function getEmail()
     {
         return $this->email;
@@ -489,22 +529,4 @@ class ReceiveMail
     {
         $this->email = $email;
     }
-
-    /**
-     * @return int
-     */
-    public function getImapPort()
-    {
-        return $this->imapPort;
-    }
-
-    /**
-     * @param int $imapPort
-     */
-    public function setImapPort($imapPort)
-    {
-        $this->imapPort = $imapPort;
-    }
 }
-
-?>
