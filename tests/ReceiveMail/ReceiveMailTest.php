@@ -1,9 +1,10 @@
 <?php
 declare(strict_types=1);
+
 namespace Pbc\ReceiveMail;
 
-use PHPUnit\Framework\TestCase;
 use Mockery as m;
+use PHPUnit\Framework\TestCase;
 
 
 /**
@@ -11,7 +12,15 @@ use Mockery as m;
  */
 function imap_open($server, $username, $password)
 {
-  return ReceiveMailTest::$functions->imap_open($server, $username, $password);
+    return ReceiveMailTest::$functions->imap_open($server, $username, $password);
+}
+
+/**
+ * Mocked function_exists
+ */
+function function_exists($function_name)
+{
+    return ReceiveMailTest::$functions->function_exists($function_name);
 }
 
 /**
@@ -25,7 +34,7 @@ function imap_open($server, $username, $password)
 class ReceiveMailTest extends TestCase
 {
 
-    /** @var m::mock $functions*/
+    /** @var m::mock $functions */
     public static $functions;
 
     /** @var \Faker\Factory */
@@ -69,8 +78,7 @@ class ReceiveMailTest extends TestCase
     {
         try {
             $receiveMail = new ReceiveMail(['foobar' => 123]);
-        }
-        catch(\Exception $ex) {
+        } catch (\Exception $ex) {
             $this->assertSame('Unknown field "foobar"', $ex->getMessage());
         }
     }
@@ -80,24 +88,39 @@ class ReceiveMailTest extends TestCase
      */
     public function testThatConnectWillConnect()
     {
+        self::$functions->shouldReceive('function_exists')->once()->withArgs(['imap_open'])->andReturn(true);
         self::$functions->shouldReceive('imap_open')->once()->andReturn(true);
         $receiveMail = new ReceiveMail([]);
-        $receiveMail->connect();
+        $connect = $receiveMail->connect();
         $this->assertTrue($receiveMail->getConnection());
+        $this->assertInstanceOf(ReceiveMail::class, $connect);
 
     }
 
     /**
      *  Test that the connection method will throw an exception
-     *  @expectedException     \Exception
-     *  @expectedExceptionMessage Error: Connecting to mail server
+     * @expectedException     \Exception
+     * @expectedExceptionMessage Error: Connecting to mail server
      */
     public function testThatConnectWillThrowAnException()
     {
+        self::$functions->shouldReceive('function_exists')->once()->andReturn(true);
         self::$functions->shouldReceive('imap_open')->once()->andReturn(false);
         $receiveMail = new ReceiveMail([]);
         $receiveMail->connect();
 
+    }
+
+    /**
+     *  Test that the connection method will throw an exception if imap_open does not exist
+     * @expectedException     \Exception
+     * @expectedExceptionMessage Error: "imap_open" function does not exist
+     */
+    public function testThatConnectWillThrowAnExceptionIfImapOpenDoeNotExist()
+    {
+        self::$functions->shouldReceive('function_exists')->once()->andReturn(false);
+        $receiveMail = new ReceiveMail([]);
+        $receiveMail->connect();
     }
 
     /**
@@ -163,11 +186,10 @@ class ReceiveMailTest extends TestCase
     public function testConstructorCanSetMailServer()
     {
 
-        $value = 'pop.'.self::$faker->freeEmailDomain;
+        $value = 'pop.' . self::$faker->freeEmailDomain;
         $receiveMail = new ReceiveMail(['mailServer' => $value]);
         $this->assertSame($value, $receiveMail->getMailServer());
     }
-
 
 
     /**
@@ -194,7 +216,6 @@ class ReceiveMailTest extends TestCase
     }
 
 
-
     /**
      * Check that the constructor can create a pop server stirng
      */
@@ -202,11 +223,12 @@ class ReceiveMailTest extends TestCase
     {
 
         $values = [
-          'port' => self::$faker->randomDigit,
-          'mailServer' => 'pop.'.self::$faker->freeEmailDomain,
+            'port' => self::$faker->randomDigit,
+            'mailServer' => 'pop.' . self::$faker->freeEmailDomain,
         ];
         $receiveMail = new ReceiveMail($values);
-        $this->assertSame('{' . $values['mailServer'] . ':' . $values['port'] . '/pop3}INBOX', $receiveMail->getServer());
+        $this->assertSame('{' . $values['mailServer'] . ':' . $values['port'] . '/pop3}INBOX',
+            $receiveMail->getServer());
     }
 
 
@@ -217,12 +239,13 @@ class ReceiveMailTest extends TestCase
     {
 
         $values = [
-          'port' => self::$faker->randomDigit,
-          'mailServer' => 'pop.'.self::$faker->freeEmailDomain,
-          'ssl' => true,
+            'port' => self::$faker->randomDigit,
+            'mailServer' => 'pop.' . self::$faker->freeEmailDomain,
+            'ssl' => true,
         ];
         $receiveMail = new ReceiveMail($values);
-        $this->assertSame('{' . $values['mailServer'] . ':' . $values['port'] . '/pop3/ssl}INBOX', $receiveMail->getServer());
+        $this->assertSame('{' . $values['mailServer'] . ':' . $values['port'] . '/pop3/ssl}INBOX',
+            $receiveMail->getServer());
     }
 
 
@@ -233,13 +256,13 @@ class ReceiveMailTest extends TestCase
     {
 
         $values = [
-          'port' => self::$faker->randomDigit,
-          'mailServer' => 'pop.'.self::$faker->freeEmailDomain,
-          'serverType' => 'imap',
+            'port' => self::$faker->randomDigit,
+            'mailServer' => 'pop.' . self::$faker->freeEmailDomain,
+            'serverType' => 'imap',
 
         ];
         $receiveMail = new ReceiveMail($values);
-        $this->assertSame('{' . $values['mailServer'] . ':' . $values['port'] .'}INBOX', $receiveMail->getServer());
+        $this->assertSame('{' . $values['mailServer'] . ':' . $values['port'] . '}INBOX', $receiveMail->getServer());
     }
 
     /**
@@ -249,13 +272,14 @@ class ReceiveMailTest extends TestCase
     {
 
         $values = [
-          'port' => null,
-          'mailServer' => 'imap.'.self::$faker->freeEmailDomain,
-          'serverType' => 'imap'
+            'port' => null,
+            'mailServer' => 'imap.' . self::$faker->freeEmailDomain,
+            'serverType' => 'imap'
 
         ];
         $receiveMail = new ReceiveMail($values);
-        $this->assertSame('{' . $values['mailServer'] . ':' . $receiveMail->getImapPort() .'}INBOX', $receiveMail->getServer());
+        $this->assertSame('{' . $values['mailServer'] . ':' . $receiveMail->getImapPort() . '}INBOX',
+            $receiveMail->getServer());
     }
 
 }

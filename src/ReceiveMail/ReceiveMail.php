@@ -205,9 +205,14 @@ class ReceiveMail
 
     /**
      * Connect To the Mail Box
+     * @return $this
+     * @throws \Exception
      */
     public function connect()
     {
+        if (!function_exists('imap_open')) {
+            throw new \Exception('Error: "imap_open" function does not exist');
+        }
         $this->setConnection(@imap_open($this->getServer(), $this->getUsername(), $this->getPassword()));
 
         if (!$this->getConnection()) {
